@@ -3,7 +3,11 @@
 namespace :i18n do
   desc "Find and list translation keys that do not exist in all locales"
   task :missing_keys => :environment do
-    finder = MissingKeysFinder.new(I18n.backend)
+    backend = I18n.backend.kind_of?(I18n::Backend::Chain) ? 
+              I18n.backend.backends.find { |b| b.kind_of?(I18n::Backend::Simple) } :
+              I18n.backend
+
+    finder = MissingKeysFinder.new(backend)
     finder.find_missing_keys
   end
 end
@@ -19,7 +23,7 @@ class MissingKeysFinder
 
   # Returns an array with all keys from all locales
   def all_keys
-    I18n.backend.send(:translations).collect do |check_locale, translations|
+    @backend.send(:translations).collect do |check_locale, translations|
       collect_keys([], translations).sort
     end.flatten.uniq
   end
@@ -102,7 +106,7 @@ class MissingKeysFinder
 
   def load_translations
     # Make sure we’ve loaded the translations
-    I18n.backend.send(:init_translations)
+    @backend.send(:init_translations)
   end
 
   def load_config
