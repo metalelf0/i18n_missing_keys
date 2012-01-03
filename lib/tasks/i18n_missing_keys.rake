@@ -15,18 +15,31 @@ end
 
 class MissingKeysFinder
 
+  SHOULD_SHOW_BLANK_TRANSLATIONS = true
+
   def initialize(backend)
     @backend = backend
     self.load_config
     self.load_translations
+    self.lookup_keys_in_views
   end
 
   # Returns an array with all keys from all locales
   def all_keys
-    @backend.send(:translations).collect do |check_locale, translations|
+    return @all_keys unless @all_keys.nil?
+    keys_from_backend = @backend.send(:translations).collect do |check_locale, translations|
       collect_keys([], translations).sort
     end.flatten.uniq
+    keys_from_file = File.open("/tmp/missing_keys").readlines.reject { |e| e.blank? }.map(&:strip)
+    return (@all_keys = (keys_from_backend + keys_from_file).flatten.uniq.sort)
   end
+
+  def lookup_keys_in_views
+    system('echo > /tmp/missing_keys')
+    system('grep -iro \'t(".*")\' app/views/* | cut -d "\"" -f 2 | sort | uniq >> /tmp/missing_keys')
+    system('grep -iro "t \'.*\'" app/views/* | cut -d ":" -f 2 | cut -d " " -f 2 | sort | uniq | sed "s/\'//g" >> /tmp/missing_keys')
+  end
+
 
   def find_missing_keys
     output_available_locales
@@ -96,7 +109,8 @@ class MissingKeysFinder
   # Returns true if key exists in the given locale
   def key_exists?(key, locale)
     I18n.locale = locale
-    I18n.translate(key, :raise => true)
+    value = I18n.translate(key, :raise => true)
+    return false if (value.blank? && SHOULD_SHOW_BLANK_TRANSLATIONS)
     return true
   rescue I18n::MissingInterpolationArgument
     return true

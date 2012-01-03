@@ -1,0 +1,12 @@
+** Lookup missing I18n translations **
+
+This rake task takes all the locales in your Rails application and reports all the keys that are missing from
+one or more locales. It can be useful when adding a new locale to an existing application or when checking the
+integrity of an existing I18n translation set.
+
+This version has two significant differences from the original one by Jakob Skjerning (https://github.com/koppen/i18n_missing_keys) and later improved by Geronimo Diaz (https://github.com/geronimod/i18n_missing_keys):
+
+* it also fetches keys directly from the app/views directory
+* it allows to report blank keys as missing
+
+
