@@ -19,6 +19,7 @@ class MissingKeysFinder
 
   def initialize(backend)
     @backend = backend
+    @rails_views = Rails.configuration.paths.all_paths.first.children["views"].paths.first + "/*"
     self.load_config
     self.load_translations
     self.lookup_keys_in_views
@@ -36,8 +37,8 @@ class MissingKeysFinder
 
   def lookup_keys_in_views
     system('echo > /tmp/missing_keys')
-    system('grep -iro \'t(".*")\' app/views/* | cut -d "\"" -f 2 | sort | uniq >> /tmp/missing_keys')
-    system('grep -iro "t \'.*\'" app/views/* | cut -d ":" -f 2 | cut -d " " -f 2 | sort | uniq | sed "s/\'//g" >> /tmp/missing_keys')
+    system('grep -iro \'t(".*")\' ' + @rails_views + ' | cut -d "\"" -f 2 | sort | uniq >> /tmp/missing_keys')
+    system('grep -iro "t \'.*\'" ' + @rails_views + ' | cut -d ":" -f 2 | cut -d " " -f 2 | sort | uniq | sed "s/\'//g" >> /tmp/missing_keys')
   end
 
 
